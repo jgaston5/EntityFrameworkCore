@@ -2129,13 +2129,20 @@ namespace Microsoft.EntityFrameworkCore
             [NotNull] this IQueryable<TSource> source,
             CancellationToken cancellationToken = default)
         {
-            var list = new List<TSource>();
-            await foreach (var element in source.AsAsyncEnumerable().WithCancellation(cancellationToken))
+            if(source.Provider is IAsyncQueryProvider)
             {
-                list.Add(element);
+                var list = new List<TSource>();
+                await foreach (var element in source.AsAsyncEnumerable().WithCancellation(cancellationToken))
+                {
+                    list.Add(element);
+                }
+                return list;
             }
+            else
+            {
+                return await Task.Run(() => source.ToList());
 
-            return list;
+            }
         }
 
         /// <summary>
